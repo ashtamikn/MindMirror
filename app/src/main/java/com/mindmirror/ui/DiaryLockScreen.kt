@@ -26,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,13 @@ fun DiaryLockScreen(
     val isUnlockMode = mode == DiaryLockMode.Unlock
     val isChangeMode = mode == DiaryLockMode.Change
     val passphrasesMatch = newPassphrase.trim() == confirmPassphrase.trim()
+
+    // Handle system back button in Change mode
+    if (isChangeMode && onCancelChange != null) {
+        BackHandler {
+            onCancelChange()
+        }
+    }
 
     if (isUnlockMode) {
         // Unlock mode: Full screen image background with passphrase at bottom

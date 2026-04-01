@@ -33,6 +33,8 @@ import com.mindmirror.ai.CompanionAi
 import com.mindmirror.ai.OpenAiCompanionAi
 import com.mindmirror.data.DiaryDatabase
 import com.mindmirror.data.DiaryRepository
+import com.mindmirror.data.TodoRepository
+import com.mindmirror.data.ThoughtRepository
 import com.mindmirror.ui.BookLibraryScreen
 import com.mindmirror.ui.DiaryLockMode
 import com.mindmirror.ui.DiaryLockScreen
@@ -40,6 +42,8 @@ import com.mindmirror.ui.DiaryViewModel
 import com.mindmirror.ui.EntryReaderScreen
 import com.mindmirror.ui.LandingScreen
 import com.mindmirror.ui.NewEntryScreen
+import com.mindmirror.ui.TodoScreen
+import com.mindmirror.ui.ThoughtsScreen
 import com.mindmirror.ui.theme.MindMirrorTheme
 import com.mindmirror.security.DiaryLockStore
 import kotlinx.coroutines.launch
@@ -49,6 +53,8 @@ private const val ROUTE_LANDING = "landing"
 private const val ROUTE_LIBRARY = "library"
 private const val ROUTE_NEW_ENTRY = "newEntry"
 private const val ROUTE_READER = "reader"
+private const val ROUTE_TODO = "todo"
+private const val ROUTE_THOUGHTS = "thoughts"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,9 +67,12 @@ class MainActivity : ComponentActivity() {
             "mindmirror.db"
         )
             .allowMainThreadQueries()
+            .fallbackToDestructiveMigration()
             .build()
 
         val repository = DiaryRepository(database.diaryDao())
+        val todoRepository = TodoRepository(database.todoDao())
+        val thoughtRepository = ThoughtRepository(database.thoughtDao())
         val diaryLockStore = DiaryLockStore(applicationContext)
         val remoteCompanionAi: CompanionAi? = if (
             BuildConfig.LLM_REMOTE_ENABLED && BuildConfig.LLM_API_KEY.isNotBlank()
@@ -216,6 +225,12 @@ class MainActivity : ComponentActivity() {
                                 onChangeLock = {
                                     lockError = null
                                     isChangingLock = true
+                                },
+                                onOpenTodo = {
+                                    navController.navigate(ROUTE_TODO)
+                                },
+                                onOpenThoughts = {
+                                    navController.navigate(ROUTE_THOUGHTS)
                                 }
                             )
                         }
@@ -298,6 +313,20 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 }
                             }
+                        }
+
+                        composable(ROUTE_TODO) {
+                            TodoScreen(
+                                todoRepository = todoRepository,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable(ROUTE_THOUGHTS) {
+                            ThoughtsScreen(
+                                thoughtRepository = thoughtRepository,
+                                onBack = { navController.popBackStack() }
+                            )
                         }
                     }
                 }

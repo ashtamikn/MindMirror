@@ -293,7 +293,7 @@ fun NewEntryScreen(
                             maxLines = 12,
                             shape = RoundedCornerShape(14.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF8B6F47),
+                                focusedBorderColor = Color(0xFF7CB587),
                                 unfocusedBorderColor = Color(0xFFD0D0D0),
                                 focusedContainerColor = Color(0xFFFFFCF8),
                                 unfocusedContainerColor = Color(0xFFFFFCF8)
@@ -317,7 +317,7 @@ fun NewEntryScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF8B6F47),
+                                focusedBorderColor = Color(0xFF7CB587),
                                 unfocusedBorderColor = Color(0xFFD0D0D0),
                                 focusedContainerColor = Color(0xFFFFFCF8),
                                 unfocusedContainerColor = Color(0xFFFFFCF8)
@@ -476,7 +476,7 @@ fun NewEntryScreen(
                         .height(50.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF8B6F47)
+                        containerColor = Color(0xFF7CB587)
                     ),
                     enabled = contentText.isNotBlank()
                 ) {

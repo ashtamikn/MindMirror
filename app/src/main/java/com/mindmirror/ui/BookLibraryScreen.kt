@@ -313,7 +313,7 @@ private fun CalendarGrid(
                                 .height(40.dp)
                                 .padding(2.dp)
                                 .clickable { onDateSelected(dayDate.timeInMillis) },
-                            color = if (hasEntry) Color(0xFF8B6F47) else Color(0xFFEEEEEE),
+                            color = if (hasEntry) Color(0xFF7CB587) else Color(0xFFEEEEEE),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(

@@ -140,7 +140,7 @@ fun EntryReaderScreen(
                     Button(
                         onClick = onSummarize,
                         enabled = !aiLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B6F47))
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7CB587))
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
