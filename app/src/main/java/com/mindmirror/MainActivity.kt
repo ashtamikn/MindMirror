@@ -4,13 +4,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -24,11 +34,15 @@ import com.mindmirror.ai.OpenAiCompanionAi
 import com.mindmirror.data.DiaryDatabase
 import com.mindmirror.data.DiaryRepository
 import com.mindmirror.ui.BookLibraryScreen
+import com.mindmirror.ui.DiaryLockMode
+import com.mindmirror.ui.DiaryLockScreen
 import com.mindmirror.ui.DiaryViewModel
 import com.mindmirror.ui.EntryReaderScreen
 import com.mindmirror.ui.LandingScreen
 import com.mindmirror.ui.NewEntryScreen
 import com.mindmirror.ui.theme.MindMirrorTheme
+import com.mindmirror.security.DiaryLockStore
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 private const val ROUTE_LANDING = "landing"
@@ -50,6 +64,7 @@ class MainActivity : ComponentActivity() {
             .build()
 
         val repository = DiaryRepository(database.diaryDao())
+        val diaryLockStore = DiaryLockStore(applicationContext)
         val remoteCompanionAi: CompanionAi? = if (
             BuildConfig.LLM_REMOTE_ENABLED && BuildConfig.LLM_API_KEY.isNotBlank()
         ) {
@@ -78,13 +93,112 @@ class MainActivity : ComponentActivity() {
         setContent {
             MindMirrorTheme {
                 Surface {
+                    val coroutineScope = rememberCoroutineScope()
                     val navController = rememberNavController()
                     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
                     var selectedEntryId by remember { mutableStateOf<Long?>(null) }
                     var isEditMode by remember { mutableStateOf(false) }
+                    var isUnlocked by remember { mutableStateOf(false) }
+                    var isChangingLock by remember { mutableStateOf(false) }
+                    var lockError by remember { mutableStateOf<String?>(null) }
 
                     val viewModel: DiaryViewModel = viewModel(factory = factory)
                     val uiState by viewModel.uiState.collectAsState()
+                    val lockState by diaryLockStore.state.collectAsState(initial = null)
+
+                    if (lockState == null) {
+                        Surface(modifier = Modifier.fillMaxSize()) {
+                            androidx.compose.foundation.layout.Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = "Loading your diary...")
+                            }
+                        }
+                        return@Surface
+                    }
+
+                    val currentLockState = lockState!!
+
+                    DisposableEffect(currentLockState.isConfigured, isChangingLock, isUnlocked) {
+                        val lifecycle = ProcessLifecycleOwner.get().lifecycle
+                        val observer = LifecycleEventObserver { _, event ->
+                            if (
+                                event == Lifecycle.Event.ON_STOP &&
+                                currentLockState.isConfigured &&
+                                isUnlocked &&
+                                !isChangingLock
+                            ) {
+                                lockError = null
+                                isUnlocked = false
+                                viewModel.clearReflection()
+                            }
+                        }
+                        lifecycle.addObserver(observer)
+                        onDispose {
+                            lifecycle.removeObserver(observer)
+                        }
+                    }
+
+                    val lockMode = when {
+                        isChangingLock -> DiaryLockMode.Change
+                        !currentLockState.isConfigured -> DiaryLockMode.Setup
+                        !isUnlocked -> DiaryLockMode.Unlock
+                        else -> null
+                    }
+
+                    if (lockMode != null) {
+                        DiaryLockScreen(
+                            mode = lockMode,
+                            question = currentLockState.question,
+                            errorMessage = lockError,
+                            onUnlock = { passphrase ->
+                                coroutineScope.launch {
+                                    if (diaryLockStore.verifyPassphrase(passphrase)) {
+                                        lockError = null
+                                        isUnlocked = true
+                                    } else {
+                                        lockError = "Wrong passphrase. Try again."
+                                    }
+                                }
+                            },
+                            onCreateLock = { question, passphrase ->
+                                coroutineScope.launch {
+                                    if (question.trim().length < 6 || passphrase.trim().length < 3) {
+                                        lockError = "Create a personal question and a short passphrase first."
+                                    } else {
+                                        diaryLockStore.saveCredentials(question, passphrase)
+                                        lockError = null
+                                        isUnlocked = true
+                                    }
+                                }
+                            },
+                            onChangeLock = { currentPassphrase, newQuestion, newPassphrase ->
+                                coroutineScope.launch {
+                                    if (!diaryLockStore.verifyPassphrase(currentPassphrase)) {
+                                        lockError = "Current passphrase is incorrect."
+                                    } else if (newQuestion.trim().length < 6 || newPassphrase.trim().length < 3) {
+                                        lockError = "Enter a better question and passphrase."
+                                    } else {
+                                        diaryLockStore.saveCredentials(newQuestion, newPassphrase)
+                                        lockError = null
+                                        isChangingLock = false
+                                        isUnlocked = true
+                                    }
+                                }
+                            },
+                            onCancelChange = if (isChangingLock) {
+                                {
+                                    lockError = null
+                                    isChangingLock = false
+                                }
+                            } else {
+                                null
+                            }
+                        )
+                        return@Surface
+                    }
 
                     NavHost(navController = navController, startDestination = ROUTE_LANDING) {
                         composable(ROUTE_LANDING) {
@@ -93,10 +207,15 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(ROUTE_LIBRARY)
                                 },
                                 onNewEntry = {
+                                    lockError = null
                                     selectedDateMillis = null
                                     selectedEntryId = null
                                     isEditMode = false
                                     navController.navigate(ROUTE_NEW_ENTRY)
+                                },
+                                onChangeLock = {
+                                    lockError = null
+                                    isChangingLock = true
                                 }
                             )
                         }

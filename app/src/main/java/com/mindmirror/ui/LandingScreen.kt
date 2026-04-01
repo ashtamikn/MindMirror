@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,7 +32,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun LandingScreen(
     onOpenBook: () -> Unit,
-    onNewEntry: () -> Unit
+    onNewEntry: () -> Unit,
+    onChangeLock: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -94,6 +96,17 @@ fun LandingScreen(
                 onClick = onNewEntry,
                 backgroundColor = Color(0xFFD4A574),
                 contentColor = Color(0xFF3D3D3D)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookStyleButton(
+                icon = Icons.Default.Lock,
+                title = "Change Passphrase",
+                subtitle = "Edit your personal question",
+                onClick = onChangeLock,
+                backgroundColor = Color(0xFFEEE2D3),
+                contentColor = Color(0xFF5A4630)
             )
 
             Spacer(modifier = Modifier.height(80.dp))
