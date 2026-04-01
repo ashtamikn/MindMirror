@@ -40,9 +40,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.mindmirror.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
@@ -73,125 +78,137 @@ fun LandingScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = DiaryTheme.background
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Top Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                DiaryTheme.primaryBrown,
-                                DiaryTheme.primaryBrown.copy(alpha = 0.9f)
-                            )
+        // Top Header (no background image here)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            DiaryTheme.primaryBrown,
+                            DiaryTheme.primaryBrown.copy(alpha = 0.9f)
                         )
                     )
-                    .padding(top = 48.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                )
+                .padding(top = 48.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Dear Diary ...",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Light,
+                            fontStyle = FontStyle.Italic,
+                            color = Color.White
+                        )
+                    }
+                    
+                    // Settings/Lock button
+                    IconButton(
+                        onClick = onChangeLock,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
                     ) {
-                        Column {
-                            Text(
-                                text = "Dear Diary",
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Light,
-                                fontStyle = FontStyle.Italic,
-                                color = Color.White
-                            )
-                            Text(
-                                text = "Your personal space",
-                                fontSize = 14.sp,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
-                        }
-                        
-                        // Settings/Lock button
-                        IconButton(
-                            onClick = onChangeLock,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.2f))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Change Lock",
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Change Lock",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                 }
             }
-            
-            // Modern Tab Bar
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 20.dp),
-                color = DiaryTheme.cardBackground.copy(alpha = 0.9f),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(6.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    TabItem(
-                        icon = Icons.Outlined.Menu,
-                        selectedIcon = Icons.Filled.Menu,
-                        label = "Read",
-                        isSelected = selectedTab == 0,
-                        onClick = { selectedTab = 0 }
-                    )
-                    TabItem(
-                        icon = Icons.Outlined.Edit,
-                        selectedIcon = Icons.Filled.Edit,
-                        label = "Write",
-                        isSelected = selectedTab == 1,
-                        onClick = { selectedTab = 1 }
-                    )
-                    TabItem(
-                        icon = Icons.Outlined.CheckCircle,
-                        selectedIcon = Icons.Filled.CheckCircle,
-                        label = "Todo",
-                        isSelected = selectedTab == 2,
-                        onClick = { selectedTab = 2 }
-                    )
-                    TabItem(
-                        icon = Icons.Outlined.Star,
-                        selectedIcon = Icons.Filled.Star,
-                        label = "Thoughts",
-                        isSelected = selectedTab == 3,
-                        onClick = { selectedTab = 3 }
-                    )
-                }
-            }
-            
-            // Content area based on selected tab
-            Box(
+        }
+        
+        // Content area with background image (starts after header)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+        ) {
+            // Background image with reduced opacity
+            Image(
+                painter = painterResource(id = R.drawable.home_background),
+                contentDescription = "Background",
                 modifier = Modifier
                     .fillMaxSize()
-                    .weight(1f)
-                    .padding(24.dp)
+                    .alpha(0.5f),
+                contentScale = ContentScale.FillBounds
+            )
+            
+            // Content overlay
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                when (selectedTab) {
-                    0 -> ReadTabContent(onOpenBook = onOpenBook)
-                    1 -> WriteTabContent(onNewEntry = onNewEntry)
-                    2 -> TodoTabPlaceholder(onOpenTodo = onOpenTodo)
-                    3 -> ThoughtsTabPlaceholder(onOpenThoughts = onOpenThoughts)
+                // Modern Tab Bar
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 20.dp),
+                    color = DiaryTheme.cardBackground.copy(alpha = 0.9f),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(6.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        TabItem(
+                            icon = Icons.Outlined.Menu,
+                            selectedIcon = Icons.Filled.Menu,
+                            label = "Read",
+                            isSelected = selectedTab == 0,
+                            onClick = { selectedTab = 0 }
+                        )
+                        TabItem(
+                            icon = Icons.Outlined.Edit,
+                            selectedIcon = Icons.Filled.Edit,
+                            label = "Write",
+                            isSelected = selectedTab == 1,
+                            onClick = { selectedTab = 1 }
+                        )
+                        TabItem(
+                            icon = Icons.Outlined.CheckCircle,
+                            selectedIcon = Icons.Filled.CheckCircle,
+                            label = "Todo",
+                            isSelected = selectedTab == 2,
+                            onClick = { selectedTab = 2 }
+                        )
+                        TabItem(
+                            icon = Icons.Outlined.Star,
+                            selectedIcon = Icons.Filled.Star,
+                            label = "Thoughts",
+                            isSelected = selectedTab == 3,
+                            onClick = { selectedTab = 3 }
+                        )
+                    }
+                }
+                
+                // Content area based on selected tab
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                        .padding(24.dp)
+                ) {
+                    when (selectedTab) {
+                        0 -> ReadTabContent(onOpenBook = onOpenBook)
+                        1 -> WriteTabContent(onNewEntry = onNewEntry)
+                        2 -> TodoTabPlaceholder(onOpenTodo = onOpenTodo)
+                        3 -> ThoughtsTabPlaceholder(onOpenThoughts = onOpenThoughts)
+                    }
                 }
             }
         }
@@ -285,32 +302,7 @@ private fun ReadTabContent(onOpenBook: () -> Unit) {
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        // Quick stats or recent entries placeholder
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = DiaryTheme.lightCard,
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Text(
-                    text = "Recent Entries",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DiaryTheme.darkText
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Tap above to view all your diary entries",
-                    fontSize = 13.sp,
-                    color = DiaryTheme.subtleText
-                )
-            }
-        }
+
     }
 }
 
@@ -362,33 +354,6 @@ private fun WriteTabContent(onNewEntry: () -> Unit) {
                     fontSize = 14.sp,
                     color = DiaryTheme.subtleText,
                     textAlign = TextAlign.Center
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        // Writing prompt
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = DiaryTheme.accentGold.copy(alpha = 0.2f),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Text(
-                    text = "💡 Writing Prompt",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DiaryTheme.darkText
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "What made you smile today?",
-                    fontSize = 14.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = DiaryTheme.subtleText
                 )
             }
         }
