@@ -24,9 +24,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +52,8 @@ fun EntryReaderScreen(
     onEdit: () -> Unit,
     onSummarize: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFFAF7F2)
@@ -147,6 +151,24 @@ fun EntryReaderScreen(
                         Text(
                             text = if (aiLoading) "Analyzing..." else "Summarize my thoughts",
                             color = Color.White
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            shareEntryBackup(
+                                context = context,
+                                dateMillis = entry.createdAtEpochMillis,
+                                mood = entry.mood,
+                                content = entry.content
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Save to Google Keep",
+                            color = Color(0xFF8B6F47),
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
 

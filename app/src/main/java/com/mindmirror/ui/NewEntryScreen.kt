@@ -16,14 +16,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -36,11 +37,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
@@ -61,6 +64,7 @@ fun NewEntryScreen(
 ) {
     val viewModel: DiaryViewModel = viewModel(factory = viewModelFactory)
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     
     var contentText by remember(entryToEdit?.id) { mutableStateOf(entryToEdit?.content ?: "") }
     var moodText by remember(entryToEdit?.id) { mutableStateOf(entryToEdit?.mood ?: "") }
@@ -127,6 +131,11 @@ fun NewEntryScreen(
                         color = Color(0xFF8B6F47),
                         fontWeight = FontWeight.Bold
                     )
+                    Text(
+                        text = "Write freely, then save a backup to Google Keep if you want.",
+                        fontSize = 12.sp,
+                        color = Color(0xFF7A6B57)
+                    )
                 }
             }
 
@@ -136,42 +145,44 @@ fun NewEntryScreen(
                     .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Date selector section
-                Text(
-                    text = "Select Date",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3D3D3D)
-                )
-                
-                // Date picker button
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
                         .clickable { showDatePicker = !showDatePicker },
                     color = Color.White,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(14.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = formatDateOnly(selectedDate),
-                            fontSize = 16.sp,
-                            color = Color(0xFF3D3D3D),
-                            fontWeight = FontWeight.Medium
+                            text = "Page Date",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF8B6F47)
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = formatDateOnly(selectedDate),
+                                fontSize = 16.sp,
+                                color = Color(0xFF3D3D3D),
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = if (showDatePicker) "🔽" else "📅",
+                                fontSize = 20.sp,
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .padding(8.dp)
+                            )
+                        }
                         Text(
-                            text = if (showDatePicker) "🔽" else "📅",
-                            fontSize = 20.sp,
-                            modifier = Modifier
-                                .width(40.dp)
-                                .padding(8.dp)
+                            text = "Tap to choose today, a past date, or a future page.",
+                            fontSize = 12.sp,
+                            color = Color(0xFF7A6B57)
                         )
                     }
                 }
@@ -203,7 +214,7 @@ fun NewEntryScreen(
                                 }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.KeyboardArrowLeft,
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                                     contentDescription = "Previous Month",
                                     tint = Color(0xFF8B6F47)
                                 )
@@ -224,7 +235,7 @@ fun NewEntryScreen(
                                     }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.KeyboardArrowRight,
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                         contentDescription = "Next Month",
                                         tint = Color(0xFF8B6F47)
                                     )
@@ -247,66 +258,78 @@ fun NewEntryScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Content input
-                Text(
-                    text = "Your thoughts",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3D3D3D)
-                )
-
-                OutlinedTextField(
-                    value = contentText,
-                    onValueChange = {
-                        contentText = it
-                        viewModel.onWritingDraftChanged(contentText, moodText)
-                    },
-                    placeholder = { Text("Write your thoughts and reflections...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    minLines = 8,
-                    maxLines = 10,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF8B6F47),
-                        unfocusedBorderColor = Color(0xFFD0D0D0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Mood input
-                Text(
-                    text = "How are you feeling?",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3D3D3D)
-                )
-
-                OutlinedTextField(
-                    value = moodText,
-                    onValueChange = {
-                        moodText = it
-                        viewModel.onWritingDraftChanged(contentText, moodText)
-                    },
-                    placeholder = { Text("e.g., happy, thoughtful, calm...") },
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF8B6F47),
-                        unfocusedBorderColor = Color(0xFFD0D0D0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    )
-                )
+                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Your Page",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF3D3D3D)
+                        )
+                        Text(
+                            text = "Start with what happened, how it felt, or what you want to remember.",
+                            fontSize = 12.sp,
+                            color = Color(0xFF7A6B57)
+                        )
+
+                        OutlinedTextField(
+                            value = contentText,
+                            onValueChange = {
+                                contentText = it
+                                viewModel.onWritingDraftChanged(contentText, moodText)
+                            },
+                            placeholder = { Text("Write your thoughts and reflections...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(240.dp),
+                            minLines = 9,
+                            maxLines = 12,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF8B6F47),
+                                unfocusedBorderColor = Color(0xFFD0D0D0),
+                                focusedContainerColor = Color(0xFFFFFCF8),
+                                unfocusedContainerColor = Color(0xFFFFFCF8)
+                            )
+                        )
+
+                        Text(
+                            text = "Mood (optional)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF3D3D3D)
+                        )
+
+                        OutlinedTextField(
+                            value = moodText,
+                            onValueChange = {
+                                moodText = it
+                                viewModel.onWritingDraftChanged(contentText, moodText)
+                            },
+                            placeholder = { Text("e.g., happy, thoughtful, calm...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF8B6F47),
+                                unfocusedBorderColor = Color(0xFFD0D0D0),
+                                focusedContainerColor = Color(0xFFFFFCF8),
+                                unfocusedContainerColor = Color(0xFFFFFCF8)
+                            )
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Friend Chat",
+                    text = "Companion Corner",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF3D3D3D)
@@ -342,7 +365,7 @@ fun NewEntryScreen(
                 }
 
                 Text(
-                    text = "Thought Summary",
+                    text = "Reflection",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF3D3D3D)
@@ -464,6 +487,38 @@ fun NewEntryScreen(
                         color = Color.White
                     )
                 }
+
+                OutlinedButton(
+                    onClick = {
+                        shareEntryBackup(
+                            context = context,
+                            dateMillis = selectedDate,
+                            mood = moodText,
+                            content = contentText
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    enabled = contentText.isNotBlank(),
+                    border = BorderStroke(1.dp, Color(0xFF8B6F47))
+                ) {
+                    Text(
+                        text = "Save to Google Keep",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF8B6F47)
+                    )
+                }
+
+                Text(
+                    text = "This opens Google Keep directly when it is installed. If not, your phone will show the normal share sheet.",
+                    fontSize = 12.sp,
+                    color = Color(0xFF7A6B57),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
