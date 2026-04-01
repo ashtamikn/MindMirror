@@ -6,6 +6,7 @@ import com.mindmirror.ai.CompanionAi
 import com.mindmirror.data.DiaryEntry
 import com.mindmirror.data.DiaryRepository
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -184,19 +185,19 @@ class DiaryViewModel(
     fun onWritingDraftChanged(content: String, mood: String) {
         val trimmedContent = content.trim()
         val fingerprint = "${trimmedContent.lowercase()}|${mood.trim().lowercase()}"
-        if (trimmedContent.isBlank() || trimmedContent.length < 12 || fingerprint == lastChatFingerprint) {
+        if (trimmedContent.isBlank() || trimmedContent.length < 8 || fingerprint == lastChatFingerprint) {
             chatReplyJob?.cancel()
             _uiState.update { it.copy(isChatTyping = false) }
             return
         }
 
         chatReplyJob?.cancel()
+        _uiState.update { it.copy(isChatTyping = true) }
         chatReplyJob = viewModelScope.launch {
-            delay(700)
-            _uiState.update { it.copy(isChatTyping = true) }
-            delay(850)
+            delay(650)
 
             val reply = buildFriendlyReply(content = content, mood = mood)
+            coroutineContext.ensureActive()
             lastChatFingerprint = fingerprint
             _uiState.update { state ->
                 val updated = (state.chatMessages + ChatMessage(
