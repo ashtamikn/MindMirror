@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mindmirror.ai.CompanionAi
 import com.mindmirror.data.DiaryEntry
 import com.mindmirror.data.DiaryRepository
+import com.mindmirror.data.DraftManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
@@ -46,7 +47,8 @@ data class DiaryUiState(
 
 class DiaryViewModel(
     private val repository: DiaryRepository,
-    private val companionAi: CompanionAi? = null
+    private val companionAi: CompanionAi? = null,
+    private val draftManager: DraftManager? = null
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DiaryUiState())
     val uiState: StateFlow<DiaryUiState> = _uiState.asStateFlow()
@@ -54,6 +56,16 @@ class DiaryViewModel(
     private var lastChatFingerprint: String = ""
 
     init {
+        // Load saved drafts on initialization
+        draftManager?.let { dm ->
+            _uiState.update {
+                it.copy(
+                    contentDraft = dm.getContentDraft(),
+                    moodDraft = dm.getMoodDraft()
+                )
+            }
+        }
+        
         viewModelScope.launch {
             repository.observeEntries().collect { entries ->
                 _uiState.update {
@@ -65,10 +77,17 @@ class DiaryViewModel(
 
     fun updateContentDraft(value: String) {
         _uiState.update { it.copy(contentDraft = value) }
+        draftManager?.saveContentDraft(value)
     }
 
     fun updateMoodDraft(value: String) {
         _uiState.update { it.copy(moodDraft = value) }
+        draftManager?.saveMoodDraft(value)
+    }
+    
+    fun clearDrafts() {
+        _uiState.update { it.copy(contentDraft = "", moodDraft = "") }
+        draftManager?.clearDrafts()
     }
 
     fun saveEntry() {

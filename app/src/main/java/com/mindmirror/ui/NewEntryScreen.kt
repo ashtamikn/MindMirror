@@ -66,8 +66,12 @@ fun NewEntryScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    var contentText by remember(entryToEdit?.id) { mutableStateOf(entryToEdit?.content ?: "") }
-    var moodText by remember(entryToEdit?.id) { mutableStateOf(entryToEdit?.mood ?: "") }
+    // For edit mode, use entry content; for new entry, use persisted draft from ViewModel
+    val initialContent = if (isEditMode && entryToEdit != null) entryToEdit.content else state.contentDraft
+    val initialMood = if (isEditMode && entryToEdit != null) entryToEdit.mood else state.moodDraft
+    
+    var contentText by remember(isEditMode, entryToEdit?.id) { mutableStateOf(initialContent) }
+    var moodText by remember(isEditMode, entryToEdit?.id) { mutableStateOf(initialMood) }
     var selectedDate by remember(entryToEdit?.id, selectedDateMillis) {
         mutableStateOf(entryToEdit?.createdAtEpochMillis ?: selectedDateMillis ?: System.currentTimeMillis())
     }
@@ -283,6 +287,9 @@ fun NewEntryScreen(
                             value = contentText,
                             onValueChange = {
                                 contentText = it
+                                if (!isEditMode) {
+                                    viewModel.updateContentDraft(it)
+                                }
                                 viewModel.onWritingDraftChanged(contentText, moodText)
                             },
                             placeholder = { Text("Write your thoughts and reflections...") },
@@ -311,6 +318,9 @@ fun NewEntryScreen(
                             value = moodText,
                             onValueChange = {
                                 moodText = it
+                                if (!isEditMode) {
+                                    viewModel.updateMoodDraft(it)
+                                }
                                 viewModel.onWritingDraftChanged(contentText, moodText)
                             },
                             placeholder = { Text("e.g., happy, thoughtful, calm...") },
@@ -468,6 +478,10 @@ fun NewEntryScreen(
                                     dateMillis = selectedDate,
                                     onSaved = onEntrySaved
                                 )
+                            }
+                            // Clear draft after saving
+                            if (!isEditMode) {
+                                viewModel.clearDrafts()
                             }
                         }
                     },

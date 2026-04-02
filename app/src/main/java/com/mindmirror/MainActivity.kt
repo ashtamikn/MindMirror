@@ -33,6 +33,7 @@ import com.mindmirror.ai.CompanionAi
 import com.mindmirror.ai.OpenAiCompanionAi
 import com.mindmirror.data.DiaryDatabase
 import com.mindmirror.data.DiaryRepository
+import com.mindmirror.data.DraftManager
 import com.mindmirror.data.TodoRepository
 import com.mindmirror.data.ThoughtRepository
 import com.mindmirror.ui.BookLibraryScreen
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
         val todoRepository = TodoRepository(database.todoDao())
         val thoughtRepository = ThoughtRepository(database.thoughtDao())
         val diaryLockStore = DiaryLockStore(applicationContext)
+        val draftManager = DraftManager(applicationContext)
         val remoteCompanionAi: CompanionAi? = if (
             BuildConfig.LLM_REMOTE_ENABLED && BuildConfig.LLM_API_KEY.isNotBlank()
         ) {
@@ -92,7 +94,8 @@ class MainActivity : ComponentActivity() {
                     @Suppress("UNCHECKED_CAST")
                     return DiaryViewModel(
                         repository = repository,
-                        companionAi = remoteCompanionAi
+                        companionAi = remoteCompanionAi,
+                        draftManager = draftManager
                     ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
